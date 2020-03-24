@@ -191,7 +191,7 @@ module.exports = {
                             result[key] = text;
                         }
                         if (dateOfBirth) {
-                            result[key] = moment(text, "MMM DD, YYYY").toString();
+                            result[key] = moment.tz(text, "MMM DD, YYYY",'Europe/Istanbul');
                         }
                         if (height && text !== 'm' && text !== ' ') {
                             result[key] = result[key] ? result[key] + text : text;
@@ -531,7 +531,7 @@ module.exports = {
             for (let i = 0; i < result.length; i++) {
                 result[i].competition = competitionList[i];
                 result[i].matchday = result[i].match[0];
-                result[i].date = moment(result[i].match[1], ' MMM DD, YYY').toString();
+                result[i].date = moment.tz(result[i].match[1], 'MMM DD, YYYY','Europe/Istanbul');
                 result[i].home = result[i].match[2];
                 result[i].away = result[i].match[3];
                 result[i].score = result[i].match[4];
