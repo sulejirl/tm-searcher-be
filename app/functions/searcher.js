@@ -103,6 +103,7 @@ module.exports = {
     },
     getProfile: (id, callback) => {
         let isTable = false;
+        let isNationalTable = false;
         let td = false;
         let th = false;
         let result = {};
@@ -114,7 +115,9 @@ module.exports = {
         let valuePath = false;
         let playerValue = false;
         let capsNGoalsPath = false;
-        let capsNGoalsLabel = false;
+        let nationalTeam = false;
+        let nationalTeamName = false;
+        let nationalTeamInfo = false;
         let capsNGoalsValue = false;
         let tempCapsNGoal = '';
         let formerInternationalPath = false;
@@ -124,12 +127,16 @@ module.exports = {
         let mainPositionValue = '';
         let otherPositionPath = false;
         let otherPositionValue = '';
+        let nationalTeamArray = [];
 
 
         const parser = new htmlparser2.Parser({
             onopentag(name, attribs) {
                 if (name === "table" && attribs.class === "auflistung") {
                     isTable = true;
+                }
+                if (name === "table" && attribs.class === "borderloser_odd_even_style") {
+                    isNationalTable = true;
                 }
                 if (name === "div" && attribs.class === "hauptposition-left") {
                     mainPositionPath = true;
@@ -176,6 +183,15 @@ module.exports = {
                 if (td && key === 'citizenship' && name === "img") {
                     result[key] = result[key] ? result[key] + ',' + attribs.title : attribs.title;
                 }
+                if(isNationalTable && name === 'td' && attribs.class === 'hauptlink no-border-links'){
+                    nationalTeam = true;
+                }
+                if(nationalTeam && name === 'a'){
+                    nationalTeamName = true;
+                }
+                if(isNationalTable && name === 'td' && attribs.class === 'zentriert'){
+                    nationalTeamInfo = true;
+                }
             },
             ontext(text) {
                 if (th) {
@@ -198,7 +214,6 @@ module.exports = {
 
                         }
                     } else if (key === 'contractexpires' || key === 'contractthereexpires') {
-                        console.log(moment.tz(text, "DD.MM.YYYY",'Europe/Istanbul'));
                         result[key] = moment.tz(text, "DD.MM.YYYY",'Europe/Istanbul');
                     } else if (key === 'dateoflastcontractextension') {
                         result[key] = moment.tz(text, "MMM DD, YYYY",'Europe/Istanbul');
@@ -232,6 +247,12 @@ module.exports = {
 
                     }
                 }
+                if(nationalTeamName) {
+                    nationalTeamArray.push(text.trim())
+                }
+                if(nationalTeamInfo) {
+                    text.trim().length > 0 ?nationalTeamArray.push(text.trim()) : '';
+                }
             },
             onclosetag(tagname) {
                 if (tagname === 'th') {
@@ -240,13 +261,17 @@ module.exports = {
                 if (tagname === 'td') {
                     td = false;
                     height = false;
+                    nationalTeam = false;
+                    nationalTeamInfo = false;
                 }
                 if (tagname === 'a') {
                     currentClub = false;
                     dateOfBirth = false;
+                    nationalTeamName = false;
                 }
                 if (tagname === "table") {
                     isTable = false;
+                    isNationalTable = false;
                 }
                 if (tagname === "img") {
                     placeOfBirth = false;
@@ -285,6 +310,19 @@ module.exports = {
             result.caps = tempCapsNGoal.split('/')[0];
             result.mainPosition = mainPositionValue.trim();
             result.otherPosition = otherPositionValue
+            let natInfo = []
+            let tempObj = {};
+            for(let i = 0; i <nationalTeamArray.length; i++){
+                i%4 === 0 ? tempObj.nationalTeam = nationalTeamArray[i]: '';
+                i%4 === 1 ? tempObj.debut = moment.tz(nationalTeamArray[i], 'MMM DD, YYYY','Europe/Istanbul'): '';
+                i%4 === 2 ? tempObj.apps = nationalTeamArray[i]: '';
+                i%4 === 3 ? tempObj.scored = nationalTeamArray[i]: '';
+                if(i%4 === 3){
+                natInfo.push(tempObj);
+                    tempObj = {};
+                }
+            }
+            result.nationalMatches = natInfo;
             callback(result);
 
         });
