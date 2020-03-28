@@ -478,22 +478,20 @@ module.exports = {
         let result = [];
         let line = [];
         let count = -1;
-
-
-
-
+        let matchReport = false;
+        let matchResult = 'draw';
         const parser = new htmlparser2.Parser({
             onopentag(name, attribs) {
                 if (name === 'div' && attribs.class === 'table-header img-vat') {
                     tableHeader = true
                 }
-
                 if (name === 'tr' && typeof (attribs.class) === 'string' && (attribs.class !== 'odd' && attribs.class !== 'even')) {
                     matchClass = attribs.class;
                     competitionList.push(competition);
                     if (line.length > 0) {
                         result.push({
-                            match: line
+                            match: line,
+                            status:matchResult,
                         });
                     }
                     line = [];
@@ -517,6 +515,14 @@ module.exports = {
                 if (teams && name === 'a') {
                     teamsA = true;
                 }
+                if (name === 'a' && attribs.title === 'Match report') {
+                    matchReport = true;
+                }
+                if(matchReport && name === 'span'){
+                    attribs.class === 'greentext' ? matchResult = 'win' : '';
+                    attribs.class === 'redtext' ? matchResult = 'lose' : '';
+                    attribs.class === 'ergebnis_zusatz' ? matchResult = 'penalty' : '';
+                }
                 if (matchTd && name === 'a') {
                     matchA = true;
                 }
@@ -528,8 +534,7 @@ module.exports = {
                     line[count] = text.trim();
                 }
                 if (teamsA && line[count] === '') {
-                    line[count] = text.trim();
-                }
+                    line[count] = text.trim();                }
                 if (!matchA && !teamsA && matchTd && line[count] === '') {
                     line[count] = text.trim();
                 }
@@ -550,6 +555,7 @@ module.exports = {
                 if (tagname === 'a') {
                     matchA = false;
                     teamsA = false;
+                    matchReport = false;
                 }
                 matchNotA = false;
 
