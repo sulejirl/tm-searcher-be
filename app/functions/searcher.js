@@ -521,6 +521,7 @@ module.exports = {
                 if(matchReport && name === 'span'){
                     attribs.class === 'greentext' ? matchResult = 'win' : '';
                     attribs.class === 'redtext' ? matchResult = 'lose' : '';
+                    attribs.class === '' ? matchResult = 'draw' : '';
                     attribs.class === 'ergebnis_zusatz' ? matchResult = 'penalty' : '';
                 }
                 if (matchTd && name === 'a') {
